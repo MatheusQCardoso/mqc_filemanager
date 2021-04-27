@@ -1,0 +1,34 @@
+{
+  "name": "mqc_filemanager",
+  "version": "1.0.0",
+  "description": "A simple file manager for any means.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/MatheusQCardoso/mqc_filemanager.git"
+  },
+  "keywords": [
+    "file",
+    "manager",
+    "filemanager",
+    "file-manager",
+    "mqc",
+    "matheus",
+    "quirino",
+    "cardoso"
+  ],
+  "author": "Matheus Quirino Cardoso",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/MatheusQCardoso/mqc_filemanager/issues"
+  },
+  "homepage": "https://github.com/MatheusQCardoso/mqc_filemanager#readme",
+  "dependencies": {
+    "fs": "0.0.1-security",
+    "line-reader": "^0.4.0",
+    "n-readlines": "^1.0.1"
+  }
+}
