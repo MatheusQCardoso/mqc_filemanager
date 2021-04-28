@@ -1,6 +1,6 @@
 # mqc_filemanager
 
-A simple and easy to use file manager that is completely synchronous, controllable and intuitive, with focus on being implemented alongside other modules, maintaining runtime and data integrity within all of it's use.
+A simple and easy to use file manager NodeJS module that is completely synchronous, controllable and intuitive, with focus on being implemented alongside other modules, maintaining runtime and data integrity within all of it's use.
 
 **This module is currently under initial development.**
 
@@ -32,29 +32,74 @@ This creates the file if it doesn't exist by default.
 
 **Write**
 
+`File.appendLine(_value [, _index])`
+
+This will append the value specified as a string at the end of the file. If the file is empty, it'll just create the first line.<br>If the index parameter is passed, the value will be inserted at it's position.
+
+`File.clear()`
+
+Removes all the content from the file.
+
 `File.writeOver(_value)`
 
 Substitutes the contents of the file for the value specified.
 
-`File.appendLine(_value [, _index])`
-
-This will append the value specified as a string at the end of the file. If the file is empty, it'll just create the first line. If the index parameter is passed, the value will be inserted at it's position.
-
 **Read**
+
+`File.contains(_value)`
+
+Returns whether or not the file contains, on any of it's lines, the value specified.
 
 `File.getLine(_index)`
 
 Returns a string with the content of the line at the index specified.
 
-`File.getLines()`
+`File.getLines([ _returnAsArray])`
 
-Returns all lines within one string. (Will change in the future to be an array of lines).
+Returns all lines as a string. If it receives a parameter with the value of "true", it'll return an array with all the lines instead.
+
+`File.search(_value)`
+
+Returns an array with all indexes where the value specified can be found.<br>
+Format: [ index_for_first_find: 'string_for_first_find', index_for_second_find: 'string_for_second_find', ... ]
 
 **Delete**
 
 `File.delete()`
 
-Removes the
+Removes the file.
+
+**Getters**
+
+`File.getCreationDate()`
+
+Returns a timestamp string containing the time at which the file was created.
+
+`File.getExtension()`
+
+Returns the extension from the file name as a string.
+
+`File.getFilename()`
+
+Returns the name of the file, including the extension, as a string.
+
+`File.getLineCount()`
+
+Returns the amount of lines contained in the file as an integer.
+
+`File.getMimeType()`
+
+Returns a string containing the MIME type for the file.  
+
+`File.getPath()` 
+
+Returns the full path for the file as a string.
+
+`File.getSize([ _format])`
+
+Returns the size for the file in bytes, as an integer. A format parameter can be passed for type of return.<br>
+Supported: 'B' (default), 'KB', 'MB', 'GB'. <br>
+P.S.: 'B' and 'KB' will always be integers. 'MB' and 'GB' can be doubles.
 
 **Utils**
 

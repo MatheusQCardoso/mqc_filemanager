@@ -1,11 +1,13 @@
 const fs = require('fs');
 const lineByLine = require('n-readlines');
+const mimeTypes = require('mime-types');
 
 const conf = {
         encoding: 'utf8', //ascii, utf8, utf16le, ucs2, base64, binary, hex
         auto_create: true
     };
 
+//////////////////////////////////////////////////////////////// FUNCTION CONFIG START
 function config(_json){
     if(_json){
         var array = JSON.parse(JSON.stringify(_json));
@@ -15,7 +17,9 @@ function config(_json){
     }
     return JSON.stringify(conf);
 }
+//////////////////////////////////////////////////////////////// FUNCTION CONFIG END
 
+//////////////////////////////////////////////////////////////// FILE CLASS START
 class File{
     constructor(_path){
         //VAR
@@ -27,7 +31,7 @@ class File{
         if(exists){
             this.valid = true;
         }else{
-            if(conf.auto_create){
+            if(conf["auto_create"]){
                 fs.openSync(this.path, 'w');
                 this.valid = true;
             }else{
@@ -51,20 +55,12 @@ class File{
     }
     clear(){
         if(this.valid){
-            if(fs.appendFileSync(this.path, '')){
-                return true;
-            }else{
-                throw `MQC_FILEMANAGER => FILE => CLEAR() => FILE AT '${this.path}' CANNOT BE CLEAN.`;
-            }
+            return fs.writeFileSync(this.path, '');
         }
     }
     writeOver(_value){
         if(this.valid){
-            if(fs.appendFileSync(this.path, _value)){
-                return true;
-            }else{
-                throw `MQC_FILEMANAGER => FILE => WRITEOVER() => FILE AT '${this.path}' CANNOT BE WRITTEN OVER.`;
-            }
+            return fs.writeFileSync(this.path, _value);
         }
     }
     appendLine(_value, _index){
@@ -96,10 +92,17 @@ class File{
             }
         }
     }
-    getLines(){
+    getLines(_returnAsArray){
         if(this.valid){
-            let data = fs.readFileSync(this.path).toString();
-            return data;
+            if(_returnAsArray){
+                let lines = [];
+                for(let i = 0; i < this.getLineCount(); i++){
+                    lines.push(this.getLine(i));
+                }
+                return lines;
+            }else{
+                return Buffer.from(fs.readFileSync(this.path).toString()).toString(conf["encoding"]);
+            }
         }
     }
     getLine(_index){
@@ -108,15 +111,15 @@ class File{
             let line; let i = 0;
             while(line = iterator.next()){
                 if(_index == i){
-                    return line.toString().trim();
+                    return Buffer.from(line.toString().trim()).toString(conf["encoding"]);
                 }
                 i++;
             }
             return '';
         }
     }
-    rename(_value){
-        //fs.rename('was', 'will', callback())
+    rename(_value){ //TODO
+        //fs.rename('was', 'will', callback()) 
         if(this.valid){
             //let directPath = toString(this.path);
             let fullPath = toString(this.path);
@@ -125,12 +128,15 @@ class File{
         }
     }
     delete(){
-        this.valid = false;
+        //TODO
+        this.valid = false; 
+        return fs.rmSync(this.path);
     }
     isValid(){
         return this.valid;
     }
 
+    //////////////////////////////////////////////// FILE GETTERS START
     getPath(){
         return this.path;
     }
@@ -140,31 +146,73 @@ class File{
     getExtension(){
         return this.extension;
     }
-    getSize(){
-        return fs.statSync(this.path).size;
+    getSize(_format, _round){
+        if(this.valid){
+            if(_format){
+                console.log('passed');
+                let size = parseInt(fs.statSync(this.path).size);
+                if(!toString(_format))return size;
+                let format = toString(_format).toUpperCase();
+                switch(format){
+                    case 'B':
+                        return size;
+                    case 'KB':
+                        if(_round)return Math.round(size/1024);
+                        return size/1024;
+                    case 'MB':
+                        if(_round)return Math.round(size/1024);
+                        return size/Math.pow(1024, 2);
+                    case 'GB':
+                        if(_round)return Math.round(size/1024);
+                        return size/Math.pow(1024, 3);    
+                }
+            }else{
+                return parseInt(fs.statSync(this.path).size);
+            }
+        }
     }
     getCreationDate(){
         return fs.statSync(this.path).birthtime;
     }
+    getMimeType(){
+        return mimeTypes.lookup(this.name);
+    }
+    getLineCount(){
+        if(this.valid){
+            const iterator = new lineByLine(this.path);
+            let line; let i = 0;
+            while(line = iterator.next()){
+                i++;
+                
+            }
+            return i;
+        }
+        return 0;
+    }
+    //////////////////////////////////////////////// FILE GETTERS END
 }
+//////////////////////////////////////////////////////////////// FILE CLASS END
+
+config({
+    encoding: 'binary'
+}); 
 
 let file = new File('files/teste.txt');
 
-console.log(file.getPath());
-console.log(file.getFilename());
-console.log(file.getExtension());
-console.log(file.getSize());
-console.log(file.getCreationDate());
-console.log(file.getLines());
+file.writeOver('téste\npão\n@#$');
 
+console.log(file.getSize());
+
+//////////////////////////////////////////////////////////////// FOLDER CLASS START
 class Folder{
     constructor(){
 
     }
 }
+//////////////////////////////////////////////////////////////// FOLDER CLASS END
 
 module.exports = {
     File: File, //CLASS
     Folder: Folder, //CLASS
-    config: config //CONFIG
-}
+    config: config //FUNCTION
+};
