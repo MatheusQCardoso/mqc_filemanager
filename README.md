@@ -2,27 +2,28 @@
 
 A simple and easy to use file manager NodeJS module that is completely synchronous, controllable and intuitive, with focus on being implemented alongside other modules, maintaining runtime and data integrity within all of it's use.
 
-**This module is currently under initial development.**
+*This module is currently under initial development.*
 
 ## Releases
 
+* 0.1.1 (27/04/2021) - Some getters and encoding for the file class implemented.
 * 0.1.0 (26/04/2021) - Creation and basic usage implemented for the "File" class.
 
 ## Installation and Usage
 
-* **Installation**
+* ### **Installation**
 
 This module is still under development. The installation process will be described after initial release.
 
 ---
 
-* **Instanciating**
+* ### **Instanciating**
 
 `import { File, Folder, config as mqc_filemanager_config } from "mqc_filemanager";`
 
 ---
 
-* **File**
+* ### **File**
 
 **Create**
 
@@ -67,7 +68,7 @@ Format: [ index_for_first_find: 'string_for_first_find', index_for_second_find: 
 
 `File.delete()`
 
-Removes the file.
+Removes the file. Any operations thereafter will return nothing / undefined.
 
 **Getters**
 
@@ -89,17 +90,17 @@ Returns the amount of lines contained in the file as an integer.
 
 `File.getMimeType()`
 
-Returns a string containing the MIME type for the file.  
+Returns a string containing the MIME type for the file.
 
-`File.getPath()` 
+`File.getPath()`
 
 Returns the full path for the file as a string.
 
-`File.getSize([ _format])`
+`File.getSize([ _format, _round])`
 
-Returns the size for the file in bytes, as an integer. A format parameter can be passed for type of return.<br>
+Returns the size for the file in bytes, as an integer. A format parameter can be passed for type of return. If the round parameter receives a value of true, it rounds the result to an integer.<br>
 Supported: 'B' (default), 'KB', 'MB', 'GB'. <br>
-P.S.: 'B' and 'KB' will always be integers. 'MB' and 'GB' can be doubles.
+P.S.: 'KB', 'MB' and 'GB' are returned as doubles.
 
 **Utils**
 
@@ -115,7 +116,7 @@ Returns whether or not this file exists and is valid.
 
 ---
 
-* **Folder**
+* ### **Folder**
 
 `let folder = new Folder('folder_path');`
 
@@ -123,7 +124,7 @@ Returns whether or not this file exists and is valid.
 
 ---
 
-* **config**
+* ### **config**
 
   autocreate | Automatically creates a file or folder on the path specified if it hasn't been created yet | boolean | true
 
