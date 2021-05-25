@@ -73,7 +73,8 @@ class File{
     }
     //CONSTRUCTOR
     constructor(_path){
-        if(!_path){
+        if(!_path || typeof _path != 'string'){
+            if(conf['debug'])console.log(`== FILE(${_path}): Has not received a valid path for file.`);
             this.valid = false;
             return;
         }
@@ -91,12 +92,23 @@ class File{
 
         //VALID
         if(exists){
+            if(conf['debug'])console.log(`== FILE(${_path}): File already exists.`);
             this.valid = true;
         }else{
+            if(conf['debug'])console.log(`== FILE(${_path}): File does not exists...`);
             if(conf["auto_create_file"]){
-                fs.openSync(this.path, 'w');
-                this.valid = true;
+                if(conf['debug'])console.log(`... but i can create it.`);
+                try{
+                    fs.openSync(this.path, 'w');
+                    this.valid = true;
+                    if(conf['debug'])console.log(`== FILE(${_path}): File created.`);
+                }
+                catch(e){
+                    if(conf['debug'])console.log(`== FILE(${_path}): ERR: File couldn't be created. Exception raised. This instance has been invalidated.`);
+                    this.valid = false;
+                }
             }else{
+                if(conf['debug'])console.log(`... and i don't have permission to create it. This instance has been invalidated.`);
                 this.valid = false;
                 return;
             }
@@ -105,6 +117,7 @@ class File{
         //NAME
         //EXTENSION
         if(this.valid){
+            if(conf['debug'])console.log(`== FILE(${_path}): Parsing name and extension for file.`);
             if(this.path.indexOf('/') == -1){
                 this.name = this.path;
                 if(this.name.lastIndexOf('.') != -1)
@@ -114,6 +127,7 @@ class File{
                 if(this.name.lastIndexOf('.') != -1)
                     this.extension = this.name.substring(this.name.lastIndexOf('.')+1);
             }
+            if(conf['debug'])console.log(`== FILE(${_path}): Name: '${this.name}', Extension: '${this.extension}'.`);
         }
 
     }
@@ -122,6 +136,9 @@ class File{
         if(this.isValid()){
             return fs.writeFileSync(this.path, '');
         }
+    }
+    removeLine(_index){
+        //TODO
     }
     writeOver(_value){
         if(this.isValid()){
@@ -160,17 +177,18 @@ class File{
     //READ
     getLines(_returnAsArray, _encoding){
         if(this.isValid()){
+            let enc = _encoding ? _encoding : conf['encoding'];
+
             if(_returnAsArray){
                 let lines = [];
                 for(let i = 0; i < this.getLineCount(); i++){
-                    lines.push(this.getLine(i));
+                    lines.push( Buffer.from(this.getLine(i)).toString(enc) );
                 }
                 return lines;
             }else{
-                let enc = conf['encoding'];
-                if(_encoding)enc = _encoding;
                 return Buffer.from(fs.readFileSync(this.path).toString()).toString(enc);
             }
+
         }
     }
     getLine(_index, _encoding){
@@ -179,8 +197,7 @@ class File{
             let line; let i = 0;
             while(line = iterator.next()){
                 if(_index == i){
-                    let enc = conf['encoding'];
-                    if(_encoding)enc = _encoding;
+                    let enc = _encoding && typeof _encoding == 'string' ? _encoding : conf['encoding'];
                     return Buffer.from(line.toString().trim()).toString(enc);
                 }
                 i++;
@@ -372,12 +389,14 @@ class Folder{
         return [];
     }
     constructor(_path){
-        if(typeof _path != 'string'){
+        if(!_path || typeof _path != 'string'){
             this.valid = false;
+            if(conf['debug'])console.log(`== FOLDER(${_path}): Has not received a valid path for folder.`);
             return;
         }
         try{
             if(fs.readdirSync(_path)){
+                if(conf['debug'])console.log(`== FOLDER(${_path}): Folder found!`);
                 //
                 this.valid = true;
                 if(_path.charAt(_path.length-1) != '/'){
@@ -385,15 +404,24 @@ class Folder{
                 }else{
                     this.path = _path;
                 }
+                if(conf['debug'])console.log(`== FOLDER(${_path}): Validity and Path variables set. The folder is ready to use.`);
                 //
             }else{
                 this.valid = false;
             }
         }catch(e){
+            if(conf['debug'])console.log(`== FOLDER(${_path}): Folder has not been found at path ...`);
             try{
                 if(conf['auto_create_folder']){
-                    fs.mkdirSync(_path);
+                    if(conf['debug'])console.log(`... but i have permission to create a folder if it does not exist.`);
+                    if(conf['debug'])console.log(`== FOLDER(${_path}): Attempting to create folder.`);
+                    if(fs.existsSync(_path) && fs.statSync(_path).isFile()){
+                        if(conf['debug'])console.log(`== FOLDER(${_path}): ERR: You cannot have a directory and file with the same name when the file doesn't have an extension.`);
+                        this.valid = false;
+                    }else
+                        fs.mkdirSync(_path);
                     if(fs.existsSync(_path)){
+                        if(conf['debug'])console.log(`== FOLDER(${_path}): Folder has been created dinamically!`);
                         //
                         this.valid = true;
                         if(_path.charAt(_path.length-1) != '/'){
@@ -403,12 +431,15 @@ class Folder{
                         }
                         //
                     }else{
+                        if(conf['debug'])console.log(`== FOLDER(${_path}): ERR: Could not create folder dinamically.`);
                         this.valid = false;
                     }
                 }else{
+                    if(conf['debug'])console.log(`... and i do not have permission to create a folder. This instance has been invalidated.`);
                     this.valid = false;
                 }
             }catch(e2){
+                if(conf['debug'])console.log(`== FOLDER(${_path}): ERR: Could not treat the DirectoryNotFound exception by creating it. Returned another error.`);
                 this.valid = false;
             }
             this.valid = false;
@@ -423,6 +454,7 @@ class Folder{
                 if(path.charAt(path.length-1) == '/')path = path.substring(0, path.length-1);
                 console.log(this.path);
                 console.log(path);
+                if(conf['debug'])console.log(`==> MOVE(${_newPath}): Moving from ${this.path} to ${path}. `);
                 fs.renameSync(this.path, path);
             }
         }
@@ -432,14 +464,18 @@ class Folder{
         if(this.isValid()){
             if(typeof _file == 'object'){
                 if(_file.constructor.name == 'File'){
-                    if(_file.isValid())
+                    if(_file.isValid()){
+                        if(conf['debug'])console.log(`==> PUTFILE(${_file}): Putting '${_file.getFilename()}' at '${this.getPath()}'. `);
                         _file.move(this.getPath() + _file.getFilename());
+                    }
                 }
             }else if(typeof _file == 'string'){
                 let file;
                 if(file = File.first(_file)){
-                    if(file.isValid())
+                    if(file.isValid()){
+                        if(conf['debug'])console.log(`==> PUTFILE(${file}): Putting '${file.getFilename()}' at '${this.getPath()}'. `);
                         file.move(this.getPath() + _file.getFilename());
+                    }
                 }
             }
         }
@@ -458,6 +494,32 @@ class Folder{
                         folder.move(this.getPath() + _folder.getName());
                 }
             }
+        }
+    }
+    copy(_newPath){
+        if(this.isValid()){
+            let files = fs.readdirSync(_newPath);
+        
+            let old_auto_create_folder = conf['auto_create_folder'];
+            let old_auto_create_file = conf['auto_create_file'];
+            //
+            config({
+                auto_create_file: true,
+                auto_create_folder: true
+            });
+            
+            //
+            config({
+                auto_create_file: old_auto_create_file,
+                auto_create_folder: old_auto_create_folder
+            });
+
+        }
+    }
+    delete(){
+        if(this.isValid()){
+            this.valid = false; 
+            return fs.rmdirSync(this.path);
         }
     }
     //READ
@@ -500,6 +562,7 @@ class Folder{
     }
     //GETTERS
     isValid(){
+        if(conf['debug'])console.log(`== ISVALID(): Checking wheter or not the file is valid and exists: ${this.valid}`);
         return this.valid;
     }
     getPath(){
@@ -585,15 +648,35 @@ class Folder{
 //////////////////////////////////////////////////////////////// FOLDER CLASS END
 
 //
-
-let folderF = Folder.first('files/m*');
-
-//TODO if(conf['debug'])console.log();
-
+console.log( new File('./package.json').getLine(1) );
 //
 
-module.exports = {
-    File: File, //CLASS
-    Folder: Folder, //CLASS
-    config: config //FUNCTION
-};
+module.exports = {File, Folder, config};
+//export default {File, Folder, config};
+/*
+
+Simples são minhas palavras,
+Para as quais requiro compreensão
+Cá entre nós, sempre existem pães em meu forno,
+E à tarde com certeza à mesa estarão
+-
+De certo é minha mania,
+Comer pão todos os dias
+E seja peça ou por fatia,
+Tanto o sabor é gostoso
+Como o processo é trabalhoso
+E o resultado são núvens límpidas
+-
+O plantio que precede o processo
+É e deve ser calculado
+Pois o trigo tem fama de enjoado
+Tendo que ser plantado
+Em bioma de clima temperado
+-
+Tendo o sido grão colhido
+E completamente transformado
+Assado e desenformado pelo padeiro
+Com cheiro que contagia o mundo inteiro
+Contemplamos na mesa o pão amado
+
+*/

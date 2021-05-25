@@ -6,71 +6,118 @@ A simple and easy to use file manager NodeJS module that is completely synchrono
 
 ## Releases
 
-* 0.1.1 (27/04/2021) - Some getters and encoding for the file class implemented.
-* 0.1.0 (26/04/2021) - Creation and basic usage implemented for the "File" class.
+* *undergoing testing*
+* 0.2.0 (25/05/2021) - Full File class implementation and basic Folder class implementation
+* 0.1.1 (27/04/2021) - Some getters and encoding for the file class implemented
+* 0.1.0 (26/04/2021) - Creation and basic usage implemented for the "File" class
 
 ## Installation and Usage
 
-* ### **Installation**
 
-This module is still under development. The installation process will be described after initial release.
+### **Installation**
+
+`npm i mqc_filemanager --save`
 
 ---
 
-* ### **Instanciating**
+
+### **Importing**
 
 `import { File, Folder, config as mqc_filemanager_config } from "mqc_filemanager";`
 
 ---
 
-* ### **File**
 
-**Create**
+### **File**
 
-`let file = new File('file_path.extension');`
+##### **Create/Get**
 
-This creates the file if it doesn't exist by default.
+`let file = new File(_path);`
 
-**Write**
+This gets the file at the path or creates it if it doesn't exist by default. Having an extension is optional - depends on what you need.
+
+`File.find(_path)`
+
+Returns an array with all files compatible with your search.
+
+P.S.: Using * with the search parameter is optional.
+
+Usage:
+
+> File.find('./\*host\*') //CORRECT
+>
+> File.find('./host') //CORRECT
+>
+> //Searches the current directory for files containing "host" in their name
+>
+> File.find('files/users/\*host\*') //CORRECT
+>
+> //Searches in the directory 'files/users/' for files containing "host" in their name
+>
+> File.find('files*\/\*use\*/\*host\*') //WRONG
+>
+> //Searching for an directory in this find method is not supported.
+>
+> File.find('/\*host\*') //WRONG
+>
+> //You should use './' for files in the current directory.
+
+`File.first(_path)`
+
+Searches for files at the path passed and returns the first one found.
+
+P.S.: It returns the first in alphabetical order if it finds more than one result.
+
+##### **Write**
 
 `File.appendLine(_value [, _index])`
 
-This will append the value specified as a string at the end of the file. If the file is empty, it'll just create the first line.<br>If the index parameter is passed, the value will be inserted at it's position.
-
-`File.clear()`
-
-Removes all the content from the file.
+This will append the value specified as a string at the end of the file. If the file is empty, it'll just create the first line.<br> If the index parameter is passed, the value will be inserted at it's position.
 
 `File.writeOver(_value)`
 
 Substitutes the contents of the file for the value specified.
 
-**Read**
+`File.clear()`
 
-`File.contains(_value)`
+Removes all content inside the file.
+
+`File.removeLine(_index)`
+
+Removes the line at the passed index from the file. If that line doesn't exist, it doesn't remove anything.
+
+##### **Read**
+
+###### `File.contains(_value)`
 
 Returns whether or not the file contains, on any of it's lines, the value specified.
 
-`File.getLine(_index)`
+`_value`: String - the value to be searched within the file
+
+
+###### `File.getLine(_index)`
 
 Returns a string with the content of the line at the index specified.
 
-`File.getLines([ _returnAsArray])`
+`_index`: Integer - index of the line you want to read
 
-Returns all lines as a string. If it receives a parameter with the value of "true", it'll return an array with all the lines instead.
 
-`File.search(_value)`
+###### `File.getLines([ _returnAsArray, _encoding])`
+
+Returns all lines as a string. If it receives the first parameter as true, it'll return all the lines in an array instead. If it receives the second parameter, it'll encode the lines specifically. Check the "supported encodings" section for the supported values.
+
+###### `File.search(_value)`
 
 Returns an array with all indexes where the value specified can be found.<br>
 Format: [ index_for_first_find: 'string_for_first_find', index_for_second_find: 'string_for_second_find', ... ]
 
-**Delete**
+##### **Manage**
 
-`File.delete()`
+###### `File.delete()`
 
 Removes the file. Any operations thereafter will return nothing / undefined.
 
-**Getters**
+##### **Getters**
 
 `File.getCreationDate()`
 
