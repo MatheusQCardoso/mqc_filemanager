@@ -2,6 +2,10 @@ const fs = require('fs');
 const lineByLine = require('n-readlines');
 const mimeTypes = require('mime-types');
 
+const valid_encodings = [
+    'ascii', 'utf8', 'utf16le', 'usc2', 'base64', 'binary', 'hex'
+];
+
 const conf = {  
         encoding: 'utf8', //ascii, utf8, utf16le, ucs2, base64, binary, hex
         auto_create_file: true,
@@ -43,6 +47,7 @@ class File{
     }
     static find(_filePath){
         if(typeof _filePath == 'string'){
+            //
             let finds = [];
             let fileName;
             let path;
@@ -51,24 +56,30 @@ class File{
             path = './';
                 fileName = _filePath;
             }else{
+                //
                 //TEM BARRA, SEPARAR O CAMINHO
                 path = _filePath.substr(0, _filePath.lastIndexOf('/')+1);
                 fileName = _filePath.replace(path, '');
+                //
             }
             while(fileName.charAt(0) == '*')fileName = fileName.substr(1, fileName.length-1);
             while(fileName.charAt(fileName.length-1) == '*')fileName = fileName.substr(0, fileName.length-2);
             //
             if(validatePath(path)){
+                //
                 fs.readdirSync(path).forEach((v, i) => {
                     if(v.indexOf(fileName) != -1){
+                        //
                         if(fs.statSync(path + v).isFile())
                             finds.push( new File( path + v ) );
+                        //
                     }
                 });
+                //
             }
 
-        //
             return finds;
+            //
         }
     }
     //CONSTRUCTOR
@@ -138,7 +149,16 @@ class File{
         }
     }
     removeLine(_index){
-        //TODO
+        if(this.isValid()){
+            if(_index >= 0 && _index < this.getLineCount()){
+
+                let lines = this.getLines(true);
+                lines.splice(_index, 1);
+                lines = lines.join("\r\n");
+
+                this.writeOver(lines);
+            }
+        }
     }
     writeOver(_value){
         if(this.isValid()){
@@ -178,29 +198,33 @@ class File{
     getLines(_returnAsArray, _encoding){
         if(this.isValid()){
             let enc = _encoding ? _encoding : conf['encoding'];
+            let v = Buffer.from(fs.readFileSync(this.path).toString()).toString(enc);
+            
+            if(valid_encodings.includes( enc )){
+                if(_returnAsArray)
+                    return v.split("\r\n");
 
-            if(_returnAsArray){
-                let lines = [];
-                for(let i = 0; i < this.getLineCount(); i++){
-                    lines.push( Buffer.from(this.getLine(i)).toString(enc) );
-                }
-                return lines;
-            }else{
-                return Buffer.from(fs.readFileSync(this.path).toString()).toString(enc);
+                return v;
             }
 
+            return '';
         }
     }
     getLine(_index, _encoding){
         if(this.isValid()){
-            const iterator = new lineByLine(this.path);
-            let line; let i = 0;
-            while(line = iterator.next()){
-                if(_index == i){
-                    let enc = _encoding && typeof _encoding == 'string' ? _encoding : conf['encoding'];
-                    return Buffer.from(line.toString().trim()).toString(enc);
-                }
-                i++;
+            // const iterator = new lineByLine(this.path);
+            // let line; let i = 0;
+            // while(line = iterator.next()){
+            //     if(_index == i){
+            //         let enc = _encoding && typeof _encoding == 'string' ? _encoding : conf['encoding'];
+            //         return Buffer.from(line.toString().trim()).toString(enc);
+            //     }
+            //     i++;
+            // }    
+            if(this.getLineCount() > _index && _index >= 0){
+                let enc = _encoding && typeof _encoding == 'string' ? _encoding : conf['encoding'];
+                if(valid_encodings.includes(enc))
+                    return Buffer.from( this.getLines(true)[_index].trim() ).toString( enc );
             }
             return '';
         }
@@ -225,8 +249,8 @@ class File{
         }
     }
     //MANAGE
-    move(_value){
-        let treatedValue = _value;
+    move(_newPath){
+        let treatedValue = _newPath;
         if(this.getExtension())
             if(treatedValue.lastIndexOf('.') == -1)treatedValue += '.' + this.getExtension();
 
@@ -279,9 +303,10 @@ class File{
         return this.valid;
     }
     getPath(){
-        return this.path;
+        if(this.isValid())
+            return this.path;
     }
-    getFilename(){
+    getName(){
         if(this.isValid())
             return this.name;
     }
@@ -395,7 +420,9 @@ class Folder{
             return;
         }
         try{
+            //
             if(fs.readdirSync(_path)){
+                //
                 if(conf['debug'])console.log(`== FOLDER(${_path}): Folder found!`);
                 //
                 this.valid = true;
@@ -407,20 +434,28 @@ class Folder{
                 if(conf['debug'])console.log(`== FOLDER(${_path}): Validity and Path variables set. The folder is ready to use.`);
                 //
             }else{
+                //
                 this.valid = false;
+                //
             }
+            //
         }catch(e){
+            //
             if(conf['debug'])console.log(`== FOLDER(${_path}): Folder has not been found at path ...`);
             try{
                 if(conf['auto_create_folder']){
+                    //
                     if(conf['debug'])console.log(`... but i have permission to create a folder if it does not exist.`);
                     if(conf['debug'])console.log(`== FOLDER(${_path}): Attempting to create folder.`);
+                    //
                     if(fs.existsSync(_path) && fs.statSync(_path).isFile()){
                         if(conf['debug'])console.log(`== FOLDER(${_path}): ERR: You cannot have a directory and file with the same name when the file doesn't have an extension.`);
                         this.valid = false;
                     }else
                         fs.mkdirSync(_path);
+                    //
                     if(fs.existsSync(_path)){
+                        //
                         if(conf['debug'])console.log(`== FOLDER(${_path}): Folder has been created dinamically!`);
                         //
                         this.valid = true;
@@ -429,20 +464,29 @@ class Folder{
                         }else{
                             this.path = _path;
                         }
+                        if(conf['debug'])console.log(`== FOLDER(${_path}): Validity and Path variables set. The folder is ready to use.`);
                         //
                     }else{
+                        //
                         if(conf['debug'])console.log(`== FOLDER(${_path}): ERR: Could not create folder dinamically.`);
                         this.valid = false;
+                        //
                     }
+                    //
                 }else{
+                    //
                     if(conf['debug'])console.log(`... and i do not have permission to create a folder. This instance has been invalidated.`);
                     this.valid = false;
+                    //
                 }
             }catch(e2){
+                //
                 if(conf['debug'])console.log(`== FOLDER(${_path}): ERR: Could not treat the DirectoryNotFound exception by creating it. Returned another error.`);
                 this.valid = false;
+                //
             }
             this.valid = false;
+            //
         }
     }
     //MANAGE
@@ -523,20 +567,48 @@ class Folder{
         }
     }
     //READ
-    getFiles(_search){
+    getChildren(_search, _filter){
         if(this.isValid()){
-            let fileNames = fs.readdirSync(this.path);
-            let files = [];
-            fileNames.forEach( (v) => {
+            let childrenNames = fs.readdirSync(this.path);
+            let children = [];
+
+            let filter = false; //1- ONLY FILE, 2- ONLY FOLDER, FALSE- NO FILTER
+            if(typeof _filter == 'string'){
+                switch(_filter){
+                    case 'files':
+                        filter = 1;
+                        break;
+                    case 'folders':
+                        filter = 2;
+                        break;
+                    default:
+                        filter = false;
+                        break;
+                }
+            }
+
+            childrenNames.forEach( (v) => {
                 if(_search){
                     if(v.indexOf(_search) != -1){
-                        files.push( new File(this.path + v) );
+                        if(fs.statSync( this.path + v ).isFile()){
+                            if( filter != false ?/**/ filter == 1 ? true : false /**/: true )
+                                children.push( new File( this.path + v ) );
+                        }else{
+                            if( filter != false ?/**/ filter == 2 ? true : false /**/: true )
+                                children.push( new Folder( this.path + v ) );
+                        }
                     }
                 }else{
-                    files.push( new File(this.path + v) );
+                    if(fs.statSync( this.path + v ).isFile()){
+                        if( filter != false ?/**/ filter == 1 ? true : false /**/: true )
+                            children.push( new File( this.path + v ) );
+                    }else{
+                        if( filter != false ?/**/ filter == 2 ? true : false /**/: true )
+                            children.push( new Folder( this.path + v ) );
+                    }
                 }
-            } );
-            return files;
+            });
+            return children;
         }
     }
     getFileByIndex(_param){
@@ -566,7 +638,8 @@ class Folder{
         return this.valid;
     }
     getPath(){
-        return this.path;
+        if(this.isValid())
+            return this.path;
     }
     getName(){
         if(this.isValid()){
@@ -647,36 +720,5 @@ class Folder{
 }
 //////////////////////////////////////////////////////////////// FOLDER CLASS END
 
-//
-console.log( new File('./package.json').getLine(1) );
-//
-
 module.exports = {File, Folder, config};
 //export default {File, Folder, config};
-/*
-
-Simples são minhas palavras,
-Para as quais requiro compreensão
-Cá entre nós, sempre existem pães em meu forno,
-E à tarde com certeza à mesa estarão
--
-De certo é minha mania,
-Comer pão todos os dias
-E seja peça ou por fatia,
-Tanto o sabor é gostoso
-Como o processo é trabalhoso
-E o resultado são núvens límpidas
--
-O plantio que precede o processo
-É e deve ser calculado
-Pois o trigo tem fama de enjoado
-Tendo que ser plantado
-Em bioma de clima temperado
--
-Tendo o sido grão colhido
-E completamente transformado
-Assado e desenformado pelo padeiro
-Com cheiro que contagia o mundo inteiro
-Contemplamos na mesa o pão amado
-
-*/
