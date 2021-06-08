@@ -1,6 +1,7 @@
-const fs = require('fs');
-const lineByLine = require('n-readlines');
-const mimeTypes = require('mime-types');
+//const fs = require('fs');
+//const mimeTypes = require('mime-types');
+import fs from "fs";
+import mimeTypes from "mime-types";
 
 const valid_encodings = [
     'ascii', 'utf8', 'utf16le', 'usc2', 'base64', 'binary', 'hex'
@@ -14,7 +15,7 @@ const conf = {
     };
 
 //////////////////////////////////////////////////////////////// FUNCTION CONFIG START
-function config(_json){
+export function config(_json){
     if(_json){
         var array = JSON.parse(JSON.stringify(_json));
         for(let key in array){
@@ -36,7 +37,7 @@ function validatePath(_path){
 //UTILS END
 
 //////////////////////////////////////////////////////////////// FILE CLASS START
-class File{
+export class File{
     //STATIC
     static first(_filePath){
         let finds = this.find(_filePath);
@@ -375,7 +376,7 @@ class File{
 //});
 
 //////////////////////////////////////////////////////////////// FOLDER CLASS START
-class Folder{
+export class Folder{
     static first(_path){
         if(typeof _path == 'string'){
             let finds = this.find(_path);
@@ -668,7 +669,11 @@ class Folder{
     getFileCount(){
         if(this.isValid()){
             let fileCount = 0;
-            fs.readdirSync(this.getPath()).map(v => fs.statSync(v).isFile() ? 1 : 0).forEach((v)=>{fileCount += v;});
+            let files = fs.readdirSync(this.getPath());
+            files.forEach((v) => {
+                if(fs.statSync(this.getPath() + v).isFile())
+                    fileCount++;
+            });
             return fileCount;
         }
     }
@@ -720,5 +725,4 @@ class Folder{
 }
 //////////////////////////////////////////////////////////////// FOLDER CLASS END
 
-module.exports = {File, Folder, config};
-//export default {File, Folder, config};
+//module.exports = {File, Folder, config};
